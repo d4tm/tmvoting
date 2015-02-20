@@ -25,12 +25,16 @@ def sendbadmail(b, info):
 def sendgoodmail(voter, info):
     # TODO: Remove debugging override
     print 'Sending successful vote notice to', ';'.join(voter['emails'])
+    print 'Positions:', ';'.join(voter['positions'])
     voter['emails'] = ['david@d2j.us', 'election@d4tm.org']
-    if len(voter['roles']) > 1:
-        info['goodtext'] += '\nYour vote has been recorded for each of your %d roles:' % len(voter['roles'])
-        info['goodtext'] += '\n  * '
-        info['goodtext'] += '\n  * '.join(voter['roles'])
-    message = MIMEText(info['goodtext'])
+    additional = ''
+    if len(voter['positions']) > 1:
+        additional += '\nPositions:\n  * '
+    else:
+        additional += '\nPosition:\n  * '
+    additional += '\n  * '.join(voter['positions'])
+    print info['goodtext'] + additional; return
+    message = MIMEText(info['goodtext'] + additional)
     message['Subject'] = info['goodsubj']
     message['From'] = info['from']
     message['To'] = ', '.join(voter['emails'])
@@ -95,8 +99,8 @@ while enext <= ecount:
                 if confirmed and oldvote == vote:
                     continue  # Ignore votes already registered
                 dbname = '%s %s' % (first, last)
-                role = ' '.join((' %s%s %s' % (division, area, title)).split())
-                print role, dbname, 'votes', vote
+                position = ' '.join((' %s%s %s' % (division, area, title)).split())
+                print position, dbname, 'votes', vote
                 # Normalize email addresses
                 realemail = realemail.lower()
                 email = email.lower()
@@ -108,12 +112,12 @@ while enext <= ecount:
                     confirmed = False  # Need to confirm any changes
                 c.execute('UPDATE voters SET vote = ? WHERE validation=?', (vote, validation))
                 if not confirmed:
-                    if realemail in newvoters:
-                        newvoters[realemail]['roles'].append(role)
-                        newvoters[realemail]['emails'].append(email)
-                    else:
-                        newvoters[realemail] = {'roles': [role], 'emails': [email],
+                    if validation not in newvoters:
+                        newvoters[validation] = {'positions': set(), 'emails': set(),
                                  'validation': validation}
+                    newvoters[validation]['positions'].add(position)
+                    newvoters[validation]['emails'].add(email)
+                    newvoters[validation]['emails'].add(realemail)
                               
                     badvoters.pop(realemail, None)  # A good vote overrides a bad one
         else:
@@ -129,8 +133,9 @@ for b in badvoters:
 # Now, send out emails to successful voters; every time we send an email,
 # commit that it's been done.
 for b in newvoters:
+    print '_________________________________'
     sendgoodmail(newvoters[b], info)
-    c.execute('UPDATE voters SET confirmed = 1 WHERE validation = ?', (newvoters[b]['validation'],))
+    #c.execute('UPDATE voters SET confirmed = 1 WHERE validation = ?', (newvoters[b]['validation'],))
     conn.commit() # Commit this one
 
 conn.close()
