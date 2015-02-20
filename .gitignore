@@ -3,3 +3,4 @@ badvoters.txt
 newvoters.txt
 *.csv
 *.db
+*.yml
