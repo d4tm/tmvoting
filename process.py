@@ -19,18 +19,24 @@ def sendbadmail(b, info):
     message['From'] = info['from']
     message['To'] = b
     info['s'].sendmail(info['from'], [b], message.as_string())
+    if 'bcc' in info:
+        info['s'].sendmail(info['from'], [info['bcc']], message.as_string())
 
 def sendgoodmail(voter, info):
     # TODO: Remove debugging override
     print 'Sending successful vote notice to', ';'.join(voter['emails'])
     voter['emails'] = ['david@d2j.us', 'election@d4tm.org']
     if len(voter['roles']) > 1:
-        info['goodtext'] += '\nYour vote has been recorded for each of your %d roles.' % len(voter['roles'])
+        info['goodtext'] += '\nYour vote has been recorded for each of your %d roles:' % len(voter['roles'])
+        info['goodtext'] += '\n  * '
+        info['goodtext'] += '\n  * '.join(voter['roles'])
     message = MIMEText(info['goodtext'])
     message['Subject'] = info['goodsubj']
     message['From'] = info['from']
     message['To'] = ', '.join(voter['emails'])
     info['s'].sendmail(info['from'], voter['emails'], message.as_string())
+    if 'bcc' in info:
+        info['s'].sendmail(info['from'], [info['bcc']], message.as_string())
 
 
 # Connect to the database
