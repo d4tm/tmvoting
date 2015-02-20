@@ -11,9 +11,7 @@ except yaml.YAMLError, exc:
     sys.exit(2)
 
 def sendbadmail(b, info):
-    # TODO: Remove debugging override
     print 'Sending error notice to', b
-    b = 'david@d2j.us'
     message = MIMEText(info['badtext'])
     message['Subject'] = info['badsubj']
     message['From'] = info['from']
@@ -23,17 +21,16 @@ def sendbadmail(b, info):
         info['s'].sendmail(info['from'], [info['bcc']], message.as_string())
 
 def sendgoodmail(voter, info):
-    # TODO: Remove debugging override
     print 'Sending successful vote notice to', ';'.join(voter['emails'])
     print 'Positions:', ';'.join(voter['positions'])
-    voter['emails'] = ['david@d2j.us', 'election@d4tm.org']
     additional = ''
     if len(voter['positions']) > 1:
         additional += '\nPositions:\n  * '
     else:
         additional += '\nPosition:\n  * '
     additional += '\n  * '.join(voter['positions'])
-    print info['goodtext'] + additional; return
+    print info['goodtext'] + additional
+    return
     message = MIMEText(info['goodtext'] + additional)
     message['Subject'] = info['goodsubj']
     message['From'] = info['from']
