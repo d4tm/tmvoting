@@ -30,7 +30,6 @@ def sendgoodmail(voter, info):
         additional += '\nPosition:\n  * '
     additional += '\n  * '.join(voter['positions'])
     print info['goodtext'] + additional
-    return
     message = MIMEText(info['goodtext'] + additional)
     message['Subject'] = info['goodsubj']
     message['From'] = info['from']
@@ -132,7 +131,7 @@ for b in badvoters:
 for b in newvoters:
     print '_________________________________'
     sendgoodmail(newvoters[b], info)
-    #c.execute('UPDATE voters SET confirmed = 1 WHERE validation = ?', (newvoters[b]['validation'],))
+    c.execute('UPDATE voters SET confirmed = 1 WHERE validation = ?', (newvoters[b]['validation'],))
     conn.commit() # Commit this one
 
 conn.close()
