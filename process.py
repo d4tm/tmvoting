@@ -51,7 +51,6 @@ password_mgr.add_password(None, baseurl, info['apicode'], 'footastic')
 handler = urllib2.HTTPBasicAuthHandler(password_mgr)
 
 # Connect to the mail server
-print 'connecting to', info['mailserver']
 info['s'] =  smtplib.SMTP(info['mailserver'], info.get('mailport', 25))
 info['s'].login(info['from'], info['mailpw'])
 
