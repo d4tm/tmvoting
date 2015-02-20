@@ -82,33 +82,34 @@ while enext <= ecount:
     for e in entries:
         (vote, validation, name, email) = [e[f] for f in fields]
         c.execute('SELECT first, last, title, area, division, email, vote, confirmed FROM voters WHERE validation=?', (validation,))
-        res = c.fetchone()
-        # TODO: Handle multiple votes for the same person
-        if res:
-            (first, last, title, area, division, realemail, oldvote, confirmed) = res
-            if confirmed and oldvote == vote:
-                continue  # Ignore votes already registered
-            role = ' '.join(('%s %s%s %s %s' % (title, division, area, first, last)).split())
-            print role, 'votes', vote
-            # Normalize email addresses
-            realemail = realemail.lower()
-            email = email.lower()
-            
-            if realemail <> email:
-                print 'email mismatch: db has %s, entered %s' % (realemail, email)
-            if oldvote and vote <> oldvote:
-                print 'vote change from %s to %s' % (oldvote, vote)
-                confirmed = False  # Need to confirm any changes
-            c.execute('UPDATE voters SET vote = ? WHERE validation=?', (vote, validation))
-            if not confirmed:
-                if realemail in newvoters:
-                    newvoters[realemail]['roles'].append(role)
-                    newvoters[realemail]['emails'].append(email)
-                else:
-                    newvoters[realemail] = {'roles': [role], 'emails': [email],
-                             'validation': validation}
-                          
-                badvoters.pop(realemail, None)  # A good vote overrides a bad one
+        results = c.fetchall()
+        if results:
+            for res in results:
+                (first, last, title, area, division, realemail, oldvote, confirmed) = res
+                if confirmed and oldvote == vote:
+                    continue  # Ignore votes already registered
+                dbname = '%s %s' % (first, last)
+                role = ' '.join((' %s%s %s' % (division, area, title)).split())
+                print role, dbname, 'votes', vote
+                # Normalize email addresses
+                realemail = realemail.lower()
+                email = email.lower()
+                
+                if realemail <> email:
+                    print 'email mismatch: db has %s, entered %s' % (realemail, email)
+                if oldvote and vote <> oldvote:
+                    print 'vote change from %s to %s' % (oldvote, vote)
+                    confirmed = False  # Need to confirm any changes
+                c.execute('UPDATE voters SET vote = ? WHERE validation=?', (vote, validation))
+                if not confirmed:
+                    if realemail in newvoters:
+                        newvoters[realemail]['roles'].append(role)
+                        newvoters[realemail]['emails'].append(email)
+                    else:
+                        newvoters[realemail] = {'roles': [role], 'emails': [email],
+                                 'validation': validation}
+                              
+                    badvoters.pop(realemail, None)  # A good vote overrides a bad one
         else:
             print 'Fail!', name, email, validation
             badvoters[email] = email
