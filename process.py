@@ -16,7 +16,11 @@ def sendbadmail(b, info):
     message['Subject'] = info['badsubj']
     message['From'] = info['from']
     message['To'] = b
+    if 'cc' in info:
+        message['cc'] = info['cc']
     info['s'].sendmail(info['from'], [b], message.as_string())
+    if 'cc' in info:
+        info['s'].sendmail(info['from'], [info['cc']], message.as_string())
     if 'bcc' in info:
         info['s'].sendmail(info['from'], [info['bcc']], message.as_string())
 
@@ -34,7 +38,11 @@ def sendgoodmail(voter, info):
     message['Subject'] = info['goodsubj']
     message['From'] = info['from']
     message['To'] = ', '.join(voter['emails'])
+    if 'cc' in info:
+        message['cc'] = info['cc']
     info['s'].sendmail(info['from'], voter['emails'], message.as_string())
+    if 'cc' in info:
+        info['s'].sendmail(info['from'], [info['cc']], message.as_string())
     if 'bcc' in info:
         info['s'].sendmail(info['from'], [info['bcc']], message.as_string())
 
@@ -86,15 +94,15 @@ while enext <= ecount:
 
     for e in entries:
         (vote, validation, name, email) = [e[f] for f in fields]
-        c.execute('SELECT first, last, title, area, division, email, vote, confirmed FROM voters WHERE validation=?', (validation,))
+        c.execute('SELECT first, last, title, "Club Name" as clubname, area, division, email, vote, confirmed FROM voters WHERE validation=?', (validation,))
         results = c.fetchall()
         if results:
             for res in results:
-                (first, last, title, area, division, realemail, oldvote, confirmed) = res
+                (first, last, title, clubname, area, division, realemail, oldvote, confirmed) = res
                 if confirmed and oldvote == vote:
                     continue  # Ignore votes already registered
                 dbname = '%s %s' % (first, last)
-                position = ' '.join((' %s%s %s' % (division, area, title)).split())
+                position = ' '.join((' %s%s %s %s' % (division, area, clubname, title)).split())
                 print position, dbname, 'votes', vote
                 # Normalize email addresses
                 realemail = realemail.lower()
