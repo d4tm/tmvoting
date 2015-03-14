@@ -83,6 +83,13 @@ femail = 'Field13'
 fields = (fvote, fvalidation, fname, femail)
 
 enext = 0
+c.execute ('SELECT MAX(highwater) FROM entries;')
+results = c.fetchone()
+try:
+  highwater = 0 + results[0] 
+except TypeError:
+  highwater = 0
+
 pagesize = 100
 newvoters = {}
 badvoters = {}
@@ -90,10 +97,17 @@ badvoters = {}
 while enext <= ecount:
 
     entries = json.load(opener.open(formurl + '/entries.json?pageStart=%d&pageSize=%d' % (enext, pagesize)))['Entries']
+    if not entries:
+	break;
+
     enext += pagesize
 
     for e in entries:
+        #print e
         (vote, validation, name, email) = [e[f].strip() for f in fields]
+        if int(e['EntryId']) <= highwater:
+          #print 'Already processed', e['EntryId'], name, email
+          continue
         c.execute('SELECT first, last, title, "Club Name" as clubname, area, division, email, vote, confirmed FROM voters WHERE validation=?', (validation,))
         results = c.fetchall()
         if results:
@@ -126,20 +140,29 @@ while enext <= ecount:
         else:
             print 'Fail!', name, email, validation
             badvoters[email] = email
+        highwater = max(highwater, int(e['EntryId']))
 
 conn.commit()  # Commit votes
 
 # If there were any validation fails, send out the error
 for b in badvoters:
     sendbadmail(b, info)
+    print 'error for', b
 
 # Now, send out emails to successful voters; every time we send an email,
 # commit that it's been done.
 for b in newvoters:
     print '_________________________________'
+    print 'success for', b
     sendgoodmail(newvoters[b], info)
     c.execute('UPDATE voters SET confirmed = 1 WHERE validation = ?', (newvoters[b]['validation'],))
     conn.commit() # Commit this one
+
+# Finally, update the entry number
+c.execute('INSERT INTO ENTRIES (highwater) VALUES (%d);' % highwater);
+
+conn.commit()
+
 
 conn.close()
 
