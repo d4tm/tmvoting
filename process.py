@@ -12,7 +12,7 @@ except yaml.YAMLError, exc:
 
 def sendbadmail(b, info):
     print 'Sending error notice to', b
-    message = MIMEText(info['badtext'])
+    message = MIMEText('\n'.join(info['badtext']))
     message['Subject'] = info['badsubj']
     message['From'] = info['from']
     message['To'] = b
@@ -93,7 +93,7 @@ while enext <= ecount:
     enext += pagesize
 
     for e in entries:
-        (vote, validation, name, email) = [e[f] for f in fields]
+        (vote, validation, name, email) = [e[f].strip() for f in fields]
         c.execute('SELECT first, last, title, "Club Name" as clubname, area, division, email, vote, confirmed FROM voters WHERE validation=?', (validation,))
         results = c.fetchall()
         if results:
