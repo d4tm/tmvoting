@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import urllib2, json, sqlite3, yaml, smtplib, sys
+import urllib2, json, sqlite3, yaml, smtplib, sys, time
 from email.mime.text import MIMEText
 try:
     info = yaml.load(open(sys.argv[1],'r'))
@@ -148,6 +148,7 @@ conn.commit()  # Commit votes
 for b in badvoters:
     sendbadmail(b, info)
     print 'error for', b
+    time.sleep(8)       # Make Hostgator happy
 
 # Now, send out emails to successful voters; every time we send an email,
 # commit that it's been done.
@@ -157,6 +158,7 @@ for b in newvoters:
     sendgoodmail(newvoters[b], info)
     c.execute('UPDATE voters SET confirmed = 1 WHERE validation = ?', (newvoters[b]['validation'],))
     conn.commit() # Commit this one
+    time.sleep(8)       # Make Hostgator happy
 
 # Finally, update the entry number
 c.execute('INSERT INTO ENTRIES (highwater) VALUES (%d);' % highwater);
